@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    id("maven-publish")
 }
 
 android {
@@ -43,4 +44,17 @@ dependencies {
 
     implementation("dev.samstevens.totp:totp:1.7.1")
     implementation("androidx.biometric:biometric:1.4.0-alpha02")
+}
+
+publishing {
+    publications {
+        register<MavenPublication>("release") {
+            groupId = "com.github.Akmaloktav"
+            artifactId = "QRAuthenticatorApp"
+            version = "1.0.1"
+            afterEvaluate {
+                from(components["release"])
+            }
+        }
+    }
 }
