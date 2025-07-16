@@ -9,7 +9,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.akmal.secureqr.DynamicQRGenerator // <-- PENTING: Mengimpor kelas dari library kita
+import com.akmal.secureqr.DynamicQRGenerator
 import com.google.zxing.BarcodeFormat
 import com.journeyapps.barcodescanner.BarcodeEncoder
 

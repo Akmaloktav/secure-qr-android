@@ -16,6 +16,10 @@ class DynamicQRGenerator(
     private val periodInSeconds: Int = 30 // <-- PARAMETER BARU DITAMBAHKAN
 ) {
 
+    init {
+        require(periodInSeconds > 0) {"Periode waktu (periodInSeconds) harus lebih besar daei 0."}
+    }
+
     private val timeProvider = SystemTimeProvider()
     private val codeGenerator = DefaultCodeGenerator(HashingAlgorithm.SHA256, 6)
     private val secret = sessionSecretKey
