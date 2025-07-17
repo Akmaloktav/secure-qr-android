@@ -17,40 +17,6 @@ Endpoint Validasi Absensi: Harus ada endpoint API yang mampu menerima sessionId 
 
 ---
 
-## 🧪 Contoh Cepat & Uji Coba Lokal (Tanpa Backend)
-Jika Anda ingin mencoba fungsionalitas library ini dengan cepat tanpa perlu menyiapkan backend, Anda bisa mensimulasikan secretKey secara lokal.
-
-Peringatan: Alur ini TIDAK AMAN untuk lingkungan produksi dan hanya ditujukan untuk keperluan demo dan uji coba.
-
-```Kotlin
-
-// Contoh di dalam sebuah Activity untuk demo
-private fun startDemoSession() {
-    // Simulasi data dari server
-    val mockSessionId = 999
-    val mockSecretKey = "kunci-rahasia-untuk-keperluan-demo-saja"
-
-    val qrGenerator = DynamicQRGenerator(mockSecretKey)
-
-    // Gunakan Handler atau Coroutine untuk memperbarui UI setiap detik
-    val handler = Handler(Looper.getMainLooper())
-    handler.post(object : Runnable {
-        override fun run() {
-            val qrData = qrGenerator.getCurrentQrData(mockSessionId)
-            val timeLeft = qrGenerator.getSecondsUntilNextCode()
-
-            // Tampilkan hasilnya ke UI (membutuhkan fungsi displayQrImage)
-            displayQrImage(qrData, yourImageView) 
-            timerView.text = "Sisa waktu: $timeLeft detik"
-
-            handler.postDelayed(this, 1000)
-        }
-    })
-}
-```
-
----
-
 ## Fitur ✨
 - QR Code Dinamis: Menghasilkan QR Code yang berubah secara periodik (default 30 detik) menggunakan standar keamanan TOTP. <br> 
 - Otentikasi Biometrik: Helper untuk menampilkan dialog otentikasi sidik jari atau wajah. <br> 
@@ -81,12 +47,45 @@ dependencies {
 
 ---
 
+## Panduan API
+### 1. Komponen DynamicQRGenerator
+Komponen ini digunakan untuk menghasilkan data QR Code yang dinamis.
+
+Fungsi Utama:
+* getCurrentQrData(sessionId: Int): String
+    * Tugas: Menghasilkan data QR dinamis dalam format String JSON.
+    * Parameter: Menerima sessionId (Int) yang didapat dari server Anda.
+    * Mengembalikan: Sebuah String JSON, contoh: {"sessionId":123,"totp":"456789"}.
+
+* getSecondsUntilNextCode(): Int
+    * Tugas: Menghitung sisa waktu sebelum kode TOTP berganti.
+    * Mengembalikan: Sebuah Int yang mewakili sisa detik (misal: 25).
+
+### 2. Komponen SecureProcessor
+Komponen ini menyediakan lapisan keamanan tambahan sebelum data dikirim ke server.
+
+Fungsi Utama:
+* requestBiometricAuth(...)
+  * Tugas: Menampilkan dialog otentikasi biometrik (sidik jari/wajah).
+  * Parameter: Membutuhkan activity, title, dan subtitle untuk dialog.
+  * Mengembalikan: Sebuah BiometricResult yang menandakan hasil proses (Success, Error, Canceled, NotAvailable).
+
+* getDeviceIdentifier(context: Context): String
+  * Tugas: Mendapatkan ID unik dari perangkat Android.
+  * Parameter: Membutuhkan Context.
+  * Mengembalikan: Sebuah String yang merupakan ID unik perangkat.
+
+---
+
 ## Cara Penggunaan
 **1. Menampilkan QR Code Dinamis <br>**
 
 Gunakan DynamicQRGenerator untuk menampilkan QR Code. Anda perlu menginisialisasinya dengan secretKey yang didapat dari server Anda.
 
-Catatan: Library ini hanya menghasilkan data QR Code. Untuk menampilkannya sebagai gambar, Anda memerlukan library lain seperti ZXing.
+> Catatan: Library ini hanya menghasilkan data QR Code. Untuk menampilkannya sebagai gambar, Anda memerlukan library lain seperti ZXing.
+
+> ⚠️ Penting: Mengelola Lifecycle untuk Mencegah Kebocoran Memori.
+> Karena QR Code perlu diperbarui setiap detik menggunakan Handler atau Coroutine, sangat penting untuk memulai dan menghentikan proses ini sesuai dengan lifecycle Activity atau Fragment.
 
 ```Kotlin
 
@@ -99,11 +98,20 @@ val qrGenerator = DynamicQRGenerator(secretKeyFromServer)
 
 // Fungsi untuk memperbarui UI setiap detik
 fun updateQRCode() {
-    val qrDataString = qrGenerator.getCurrentQrData(currentSessionId)
-    val timeLeft = qrGenerator.getSecondsUntilNextCode()
-    
-    displayQrImage(qrDataString, yourImageView)
-    timerView.text = "Sisa waktu: $timeLeft detik"
+    lifecycleScope.launch {
+        // Loop ini akan berhenti otomatis saat halaman ditutup
+        while (isActive) {
+            val qrData = qrGenerator.getCurrentQrData(currentSessionId)
+            val timeLeft = qrGenerator.getSecondsUntilNextCode()
+
+            // Update UI Anda
+            displayQrImage(qrData, yourImageView)
+            timerView.text = "Sisa waktu: $timeLeft detik"
+
+            // Tunggu 1 detik sebelum iterasi berikutnya
+            delay(1000)
+        }
+    }
 }
 
 // Helper untuk merender data string menjadi gambar Bitmap
@@ -148,6 +156,40 @@ fun onQrScanned(qrContent: String) {
             Toast.makeText(this, "Verifikasi gagal, absensi dibatalkan.", Toast.LENGTH_SHORT).show()
         }
     }
+}
+```
+
+---
+
+## 🧪 Contoh Cepat & Uji Coba Lokal (Tanpa Backend)
+Jika Anda ingin mencoba fungsionalitas library ini dengan cepat tanpa perlu menyiapkan backend, Anda bisa mensimulasikan secretKey secara lokal.
+
+Peringatan: Alur ini TIDAK AMAN untuk lingkungan produksi dan hanya ditujukan untuk keperluan demo dan uji coba.
+
+```Kotlin
+
+// Contoh di dalam sebuah Activity untuk demo
+private fun startDemoSession() {
+    // Simulasi data dari server
+    val mockSessionId = 999
+    val mockSecretKey = "kunci-rahasia-untuk-keperluan-demo-saja"
+
+    val qrGenerator = DynamicQRGenerator(mockSecretKey)
+
+    // Gunakan Handler atau Coroutine untuk memperbarui UI setiap detik
+    val handler = Handler(Looper.getMainLooper())
+    handler.post(object : Runnable {
+        override fun run() {
+            val qrData = qrGenerator.getCurrentQrData(mockSessionId)
+            val timeLeft = qrGenerator.getSecondsUntilNextCode()
+
+            // Tampilkan hasilnya ke UI (membutuhkan fungsi displayQrImage)
+            displayQrImage(qrData, yourImageView) 
+            timerView.text = "Sisa waktu: $timeLeft detik"
+
+            handler.postDelayed(this, 1000)
+        }
+    })
 }
 ```
 
