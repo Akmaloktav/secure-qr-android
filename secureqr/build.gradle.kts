@@ -44,6 +44,10 @@ dependencies {
 
     implementation("dev.samstevens.totp:totp:1.7.1")
     implementation("androidx.biometric:biometric:1.4.0-alpha02")
+    testImplementation("org.json:json:20231013")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:4.5.1")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
 }
 
 publishing {
@@ -51,7 +55,7 @@ publishing {
         register<MavenPublication>("release") {
             groupId = "com.github.Akmaloktav"
             artifactId = "QRAuthenticatorApp"
-            version = "1.0.2"
+            version = "1.0.3"
             afterEvaluate {
                 from(components["release"])
             }
