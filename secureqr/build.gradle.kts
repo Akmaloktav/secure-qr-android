@@ -42,6 +42,7 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
+    implementation("commons-codec:commons-codec:1.15")
     implementation("dev.samstevens.totp:totp:1.7.1")
     implementation("androidx.biometric:biometric:1.4.0-alpha02")
     testImplementation("org.json:json:20231013")
